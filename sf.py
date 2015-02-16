@@ -70,13 +70,26 @@ def w_list(w_dir):
     return dir_dict
 
 
-# params
-
 def fn_search_time(samples, cmp_result, length, verbose):
     result = []
     length = float(length)
     for smp in samples:
         match = filter(lambda w: cmp(w.length, length) == cmp_result, samples[smp])
+        if match:
+            if verbose:
+                result.append( (smp, match) )
+            else:
+                result.append(smp)
+
+    return result
+
+
+def fn_search_frate(samples, cmp_result, frate, verbose):
+    result = []
+    frate = int(frate)
+    for smp in samples:
+        match = filter(lambda w: cmp(w.framerate, frate) == cmp_result, samples[smp])
+
         if match:
             if verbose:
                 result.append( (smp, match) )
@@ -92,6 +105,9 @@ def fn_search(s_by, s_what, verbose):
   --time + --less-than
   --time + --greater-than
   --time + --equal-to
+  --framerate + --less-than
+  --framerate + --greater-than
+  --framerate + --equal-to
   --name
 Also with -v prints also the wave files within.
     """
@@ -102,13 +118,16 @@ Also with -v prints also the wave files within.
         result = filter(lambda smp: s_what in smp, samples.keys())
     else:
         cmp_result = 0
-        if s_by == "lt":
+        if s_by.endswith("lt"):
             cmp_result = -1
 
-        if s_by == "gt":
+        if s_by.endswith("gt"):
             cmp_result = 1
 
-        result = fn_search_time(samples, cmp_result, s_what, verbose)
+        if s_by.startswith("time"):
+            result = fn_search_time(samples, cmp_result, s_what, verbose)
+        elif s_by.startswith("framerate"):
+            result = fn_search_frate(samples, cmp_result, s_what, verbose)
 
     return result
 
@@ -134,6 +153,10 @@ if __name__ == '__main__':
                         help=fn_search.__doc__)
 
     parser.add_argument('-t', '--time',
+                        action="store_true",
+                        help=fn_search.__doc__)
+
+    parser.add_argument('-f', '--framerate',
                         action="store_true",
                         help=fn_search.__doc__)
 
@@ -166,13 +189,23 @@ if __name__ == '__main__':
     if args.search:
         if args.time:
             if args.less_than:
-                print fn_search("lt", args.less_than, args.verbose)
+                print fn_search("time-lt", args.less_than, args.verbose)
 
             if args.equal_to:
-                print fn_search("eq", args.equal_to, args.verbose)
+                print fn_search("time-eq", args.equal_to, args.verbose)
 
             if args.greater_than:
-                print fn_search("gt", args.greater_than, args.verbose)
+                print fn_search("time-gt", args.greater_than, args.verbose)
+
+        elif args.framerate:
+            if args.less_than:
+                print fn_search("framerate-lt", args.less_than, args.verbose)
+
+            if args.equal_to:
+                print fn_search("framerate-eq", args.equal_to, args.verbose)
+
+            if args.greater_than:
+                print fn_search("framerate-gt", args.greater_than, args.verbose)
 
         elif args.name:
             print fn_search("name", args.name, args.verbose)
